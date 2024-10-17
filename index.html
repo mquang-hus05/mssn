@@ -1,1 +1,320 @@
-<p>QUang</p>
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Hệ Thống Quản Lý Người Dùng</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+        />
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+            integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+    </head>
+    <body>
+        <nav
+            class="navbar is-primary"
+            role="navigation"
+            aria-label="main navigation"
+        >
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#home">
+                    <strong>Quản Lý Người Dùng</strong>
+                </a>
+            </div>
+            <div class="navbar-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item" href="#home">Trang Chủ</a>
+                    <a class="navbar-item" href="#login">Đăng Nhập</a>
+                    <a class="navbar-item" href="#users">Người Dùng</a>
+                </div>
+            </div>
+        </nav>
+
+        <section class="section">
+            <div class="container">
+                <div id="app"></div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Hệ Thống Quản Lý Người Dùng</strong> bởi
+                    <a href="https://github.com/mquang-hus05">mquang-hus05</a>.
+                </p>
+            </div>
+        </footer>
+
+        <script>
+            const app = document.getElementById('app');
+            const routes = {
+                '#home': homeTemplate,
+                '#login': loginTemplate,
+                '#users': usersTemplate,
+            };
+
+            function homeTemplate() {
+                return `
+                <h1 class="title">Chào mừng đến với Hệ Thống Quản Lý Người Dùng</h1>
+                <p class="subtitle">Chọn một tùy chọn từ menu để bắt đầu.</p>
+            `;
+            }
+
+            function loginTemplate() {
+                return `
+                <h2 class="title is-4">Đăng Nhập</h2>
+                <form id="loginForm" class="box">
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control has-icons-left">
+                            <input class="input" type="email" id="email" placeholder="Email" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Mật khẩu</label>
+                        <div class="control has-icons-left">
+                            <input class="input" type="password" id="password" placeholder="Mật khẩu" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button type="submit" class="button is-primary">Đăng Nhập</button>
+                        </div>
+                    </div>
+                </form>
+                <p id="loginMessage" class="has-text-centered"></p>
+            `;
+            }
+
+            function usersTemplate() {
+                return `
+                <h2 class="title is-4">Dữ Liệu Người Dùng</h2>
+                <div class="columns">
+                    <div class="column">
+                        <button id="loadUsers" class="button is-info">Tải Tất Cả Người Dùng</button>
+                    </div>
+                    <div class="column">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input class="input" type="email" id="userEmail" placeholder="Email Người Dùng">
+                            </div>
+                            <div class="control">
+                                <button id="loadUserByEmail" class="button is-primary">Tìm Theo Email</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input class="input" type="text" id="firstName" placeholder="Tên">
+                            </div>
+                            <div class="control">
+                                <button id="loadUsersByFirstName" class="button is-primary">Tìm Theo Tên</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input class="input" type="text" id="lastName" placeholder="Họ">
+                            </div>
+                            <div class="control">
+                                <button id="loadUsersByLastName" class="button is-primary">Tìm Theo Họ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="userResults" class="columns is-multiline"></div>
+            `;
+            }
+
+            function router() {
+                const hash = window.location.hash || '#home';
+                app.innerHTML = routes[hash]();
+                attachEventListeners();
+            }
+
+            function attachEventListeners() {
+                const loginForm = document.getElementById('loginForm');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', handleLogin);
+                }
+
+                const loadUsersBtn = document.getElementById('loadUsers');
+                if (loadUsersBtn) {
+                    loadUsersBtn.addEventListener('click', loadAllUsers);
+                }
+
+                const loadUserByEmailBtn =
+                    document.getElementById('loadUserByEmail');
+                if (loadUserByEmailBtn) {
+                    loadUserByEmailBtn.addEventListener(
+                        'click',
+                        loadUserByEmail,
+                    );
+                }
+
+                const loadUsersByFirstNameBtn = document.getElementById(
+                    'loadUsersByFirstName',
+                );
+                if (loadUsersByFirstNameBtn) {
+                    loadUsersByFirstNameBtn.addEventListener(
+                        'click',
+                        loadUsersByFirstName,
+                    );
+                }
+
+                const loadUsersByLastNameBtn = document.getElementById(
+                    'loadUsersByLastName',
+                );
+                if (loadUsersByLastNameBtn) {
+                    loadUsersByLastNameBtn.addEventListener(
+                        'click',
+                        loadUsersByLastName,
+                    );
+                }
+            }
+
+            async function handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const loginMessage = document.getElementById('loginMessage');
+
+                try {
+                    const response = await axios.post('/api/login', {
+                        email,
+                        password,
+                    });
+                    loginMessage.textContent = response.data.message;
+                    loginMessage.classList.add('has-text-success');
+
+                    // Fetch and display user profile after successful login
+                    await loadUserProfile(email);
+                } catch (error) {
+                    loginMessage.textContent = error.response.data.message;
+                    loginMessage.classList.add('has-text-danger');
+                }
+            }
+
+            async function loadUserProfile(email) {
+                try {
+                    const response = await axios.get(`/api/users/${email}`);
+                    const user = response.data;
+
+                    // Update the app content with user profile
+                    app.innerHTML = `
+                        <h2 class="title is-4">Hồ sơ của bạn</h2>
+                        <div class="card">
+                            <div class="card-image">
+                                <figure class="image is-4by3">
+                                    <img src="${user.avatar}" alt="${user.first_name} ${user.last_name}">
+                                </figure>
+                            </div>
+                            <div class="card-content">
+                                <div class="media">
+                                    <div class="media-content">
+                                        <p class="title is-4">${user.first_name} ${user.last_name}</p>
+                                        <p class="subtitle is-6">${user.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Lỗi khi tải hồ sơ người dùng:', error);
+                    app.innerHTML = '<p class="has-text-danger">Không thể tải hồ sơ người dùng</p>';
+                }
+            }
+
+            function displayUsers(users) {
+                const userResults = document.getElementById('userResults');
+                userResults.innerHTML = '';
+                users.forEach((user) => {
+                    const userCard = document.createElement('div');
+                    userCard.className = 'column is-one-third';
+                    userCard.innerHTML = `
+                    <div class="card">
+                        <div class="card-image">
+                            <figure class="image is-4by3">
+                                <img src="${user.avatar}" alt="${user.first_name} ${user.last_name}">
+                            </figure>
+                        </div>
+                        <div class="card-content">
+                            <div class="media">
+                                <div class="media-content">
+                                    <p class="title is-4">${user.first_name} ${user.last_name}</p>
+                                    <p class="subtitle is-6">${user.email}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    userResults.appendChild(userCard);
+                });
+            }
+
+            async function loadAllUsers() {
+                try {
+                    const response = await axios.get('/api/users');
+                    displayUsers(response.data);
+                } catch (error) {
+                    console.error('Lỗi khi tải người dùng:', error);
+                }
+            }
+
+            async function loadUserByEmail() {
+                const email = document.getElementById('userEmail').value;
+                try {
+                    const response = await axios.get(`/api/users/${email}`);
+                    displayUsers([response.data]);
+                } catch (error) {
+                    console.error('Lỗi khi tải người dùng:', error);
+                    const userResults = document.getElementById('userResults');
+                    userResults.innerHTML =
+                        '<p class="has-text-danger">Không tìm thấy người dùng</p>';
+                }
+            }
+
+            async function loadUsersByFirstName() {
+                const firstName = document.getElementById('firstName').value;
+                try {
+                    const response = await axios.get(
+                        `/api/users/firstname/${firstName}`,
+                    );
+                    displayUsers(response.data);
+                } catch (error) {
+                    console.error('Lỗi khi tải người dùng:', error);
+                }
+            }
+
+            async function loadUsersByLastName() {
+                const lastName = document.getElementById('lastName').value;
+                try {
+                    const response = await axios.get(
+                        `/api/users/lastname/${lastName}`,
+                    );
+                    displayUsers(response.data);
+                } catch (error) {
+                    console.error('Lỗi khi tải người dùng:', error);
+                }
+            }
+
+            window.addEventListener('hashchange', router);
+            window.addEventListener('load', router);
+        </script>
+    </body>
+</html>
